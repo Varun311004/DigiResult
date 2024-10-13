@@ -1,0 +1,139 @@
+/* General Reset */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Arial', sans-serif;
+  background-color: #f5f6fa;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  height: 100vh;
+}
+
+/* Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #3d3d6b;
+  width: 100%;
+  padding: 20px 0;
+}
+
+.logo {
+  height: 80px;
+  margin-right: 20px;
+}
+
+.header h1 {
+  color: white;
+  font-size: 1.8rem;
+}
+
+/* Main container */
+.container {
+  display: flex;
+  margin-top: 150px;
+  align-self: center;
+}
+
+/* Form containers */
+.form-container {
+  background-color: white;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  width: 350px;
+}
+
+.otp-form h2, 
+.login-form h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 20px;
+  text-align: center;
+}
+
+.form-group {
+  margin-bottom: 15px;
+}
+
+.form-group label {
+  font-size: 0.9rem;
+  color: #333;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.form-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  font-size: 1rem;
+}
+
+.btn-submit {
+  width: 100%;
+  padding: 12px;
+  background-color: #3d3d6b;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  font-size: 1rem;
+  cursor: pointer;
+  margin-top: 10px;
+}
+
+.btn-submit:hover {
+  background-color: #2c2c54;
+}
+
+.forgot-password {
+  font-size: 0.85rem;
+  display: block;
+  text-align: right;
+  margin-top: 10px;
+  color: #666;
+  text-decoration: none;
+}
+
+.forgot-password:hover {
+  color: #3d3d6b;
+}
+
+/* Separator between forms */
+.separator {
+  height: 250px;
+  width: 2px;
+  background-color: #ff7200;
+}
+
+
+.clg_name {
+  color: #ffffff;
+  cursor: default;
+  font-size: 22px;
+  margin: 15px 10px 15px 15px;
+  text-align: center;
+  text-decoration: none;
+}
+
+.navbar {
+  width: 100vw;
+  background-color: #363767;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+}
+
+.navbar-brand .logo {
+  height: 62px;
+}

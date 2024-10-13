@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Diary-Style Tabs to Show/Hide Columns</title>
+  <style>
+    /* Table Styling */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+
+    th, td {
+      border: 1px solid #ddd;
+      padding: 8px;
+      text-align: left;
+    }
+
+    th {
+      background-color: #f2f2f2;
+    }
+
+    /* Tab Styling */
+    .tabs {
+      position: relative;
+      float: right;
+      top: 20px;
+      right: 0;
+    }
+
+    .tab {
+      background-color: #007bff;
+      color: white;
+      padding: 10px;
+      margin-bottom: 5px;
+      text-align: center;
+      cursor: pointer;
+      width: 50px;
+      border-radius: 5px 0 0 5px;
+    }
+
+    .tab:hover {
+      background-color: #0056b3;
+    }
+
+    /* Styling to hide columns */
+    .hidden-column {
+      display: none;
+    }
+  </style>
+</head>
+<body>
+
+<h2>Diary Style Tabs for Show/Hide Columns</h2>
+
+<!-- Container for the Tabs -->
+<div class="tabs">
+  <div class="tab" onclick="toggleColumn(1)">Name</div>
+  <div class="tab" onclick="toggleColumn(2)">Age</div>
+  <div class="tab" onclick="toggleColumn(3)">Dept</div>
+</div>
+
+<!-- Table with multiple columns -->
+<table>
+  <thead>
+    <tr>
+      <th>Sr. No</th>
+      <th class="col-1">Name</th>
+      <th class="col-2">Age</th>
+      <th class="col-3">Department</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td class="col-1">John Doe</td>
+      <td class="col-2">25</td>
+      <td class="col-3">Engineering</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td class="col-1">Jane Smith</td>
+      <td class="col-2">30</td>
+      <td class="col-3">HR</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td class="col-1">Sam Brown</td>
+      <td class="col-2">22</td>
+      <td class="col-3">Marketing</td>
+    </tr>
+  </tbody>
+</table>
+
+<script>
+  // JavaScript function to toggle the visibility of the columns
+  function toggleColumn(columnIndex) {
+    const colElements = document.querySelectorAll('.col-' + columnIndex);
+    
+    colElements.forEach(function(col) {
+      if (col.style.display === 'none' || col.style.display === '') {
+        col.style.display = 'table-cell';  // Show the column
+      } else {
+        col.style.display = 'none';  // Hide the column
+      }
+    });
+  }
+</script>
+
+</body>
+</html>
