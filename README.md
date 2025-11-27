@@ -9,7 +9,6 @@ DigiResult is a secure and efficient web-based platform designed to simplify aca
 - [Key Features](#key-features)
 - [Technology Stack](#technology-stack)
 - [System Workflow](#system-workflow)
-- [Project Structure](#project-structure)
 - [Setup & Installation](#setup--installation)
 - [SMTP & OTP Email Configuration](#smtp--otp-email-configuration)
 - [How to Use](#how-to-use)
@@ -74,26 +73,6 @@ DigiResult provides a reliable and paperless approach to result management. Stud
 3. Manages student data and uploads results.
 4. Publishes and updates results as needed.
 
----
-
-## ✅ Project Structure (Sample)
-
-DigiResult/
-├── index.php # Entry page for OTP & admin login
-├── Student/
-│ ├── SendOTP.php
-│ ├── VerifyOTP.php
-│ └── Result.php
-├── Admin/
-│ ├── Login.php
-│ ├── Dashboard.php
-│ ├── ManageStudents.php
-│ └── ManageResults.php
-├── Database/
-│ └── digires_db.sql
-├── Assets/
-│ └── CSS / Images / JS
-└── README.md
 
 ---
 
@@ -120,46 +99,68 @@ DigiResult/
 - Then select the file from path DigiResult/SQL/srms.
 - Scroll down to the end and hit import button.
 
-### 5️⃣ Admin Credentials
+### 4️⃣ Admin Credentials
 Admin credentials are stored in the database.
 Use them to access the admin dashboard.
 
-## ✅ SMTP & OTP Email Configuration
-To enable OTP delivery via email:
+---
 
-Step 1: Create Google App Password
-  Go to Google Account → Security
-  Enable 2-Step Verification
-  Generate an App Password
-  Copy the 16-character password
-Step 2: Configure php.ini
-  Enable OpenSSL
-  Set sendmail path
-Step 3: Configure sendmail.ini
-  Set Gmail SMTP details:
-    Server: smtp.gmail.com
-    Port: 587
-    Security: TLS
-    Username: your Gmail
-    Password: App Password
-Step 4: Restart Apache
+## ✅ SMTP & OTP Email Configuration
+
+To enable OTP delivery via email, follow these steps:
+
+### Step 1: Create Google App Password
+1. Go to **Google Account → Security**
+2. Enable **2-Step Verification**
+3. Generate an **App Password**
+4. Copy the **16-character password**
+
+### Step 2: Configure php.ini
+1. Open `php.ini` file (located in `C:\xampp\php\`)
+2. Enable **OpenSSL** extension:
+   ```ini
+   extension=openssl
+   ```
+3. Set **sendmail path**:
+   ```ini
+   sendmail_path = "C:\xampp\sendmail\sendmail.exe -t"
+   ```
+
+### Step 3: Configure sendmail.ini
+1. Open `sendmail.ini` file (located in `C:\xampp\sendmail\`)
+2. Set Gmail SMTP details:
+   ```ini
+   smtp_server=smtp.gmail.com
+   smtp_port=587
+   smtp_ssl=tls
+   auth_username=your-email@gmail.com
+   auth_password=your-16-character-app-password
+   ```
+
+### Step 4: Restart Apache
+1. Open **XAMPP Control Panel**
+2. Stop **Apache**
+3. Start **Apache** again
+
+---
 
 ##  ✅ How to Use
 
 🎓 Students
 
-Visit:
-  http://localhost/DigiResult/Login.php
-Enter IEN/Seat Number and registered email
-Click Send OTP
-Enter the OTP received on email
-View result instantly
+  Visit : http://localhost/DigiResult/Login.php
+  Enter IEN/Seat Number and registered email
+  Click Send OTP
+  Enter the OTP received on email
+  View result instantly
 
 🛠 Administrators
 
-Visit the same link
-Enter admin credentials
-Access dashboard for management tasks
+  Visit the same link
+  Enter admin credentials
+  Access dashboard for management tasks
+
+---
 
 ## ✅ Troubleshooting
 | Issue            | Check                                 |
@@ -168,15 +169,24 @@ Access dashboard for management tasks
 | Database error   | SQL import and DB config              |
 | Page not loading | Apache and MySQL running              |
 
+---
+
 ## ✅ Future Enhancements
 
-Printable PDF results
-Analytics dashboard
-Email notifications
-Multi-semester result tracking
+  Printable PDF results
+  Analytics dashboard
+  Email notifications
+  Multi-semester result tracking
+
+---
 
 ## ✅ Support
 
 For queries or assistance, please reach out through the project repository or issue tracker.
 
 ## ✅ DigiResult is ready for secure, efficient, and paperless result management.
+
+---
+
+## 👨‍💻 Developed By
+Varun Kiran Joshi
