@@ -5,16 +5,17 @@ DigiResult is a secure and efficient web-based platform designed to simplify aca
 ---
 
 ## 📌 Table of Contents
-- [About the System](#about-the-system)
-- [Key Features](#key-features)
-- [Technology Stack](#technology-stack)
-- [System Workflow](#system-workflow)
-- [Setup & Installation](#setup--installation)
-- [SMTP & OTP Email Configuration](#smtp--otp-email-configuration)
-- [How to Use](#how-to-use)
-- [Troubleshooting](#troubleshooting)
-- [Future Enhancements](#future-enhancements)
-- [Support](#support)
+- [About the System](#-about-the-system)
+- [Key Features](#-key-features)
+- [Technology Stack](#-technology-stack)
+- [System Workflow](#-system-workflow)
+- [Setup & Installation](#-setup--installation)
+- [SMTP & OTP Email Configuration](#-smtp--otp-email-configuration)
+- [How to Use](#-how-to-use)
+- [Troubleshooting](#-troubleshooting)
+- [Future Enhancements](#-future-enhancements)
+- [Support](#-support)
+- [Developed By](#-developed-by)
 
 ---
 
@@ -72,7 +73,6 @@ DigiResult provides a reliable and paperless approach to result management. Stud
 2. Accesses the dashboard.
 3. Manages student data and uploads results.
 4. Publishes and updates results as needed.
-
 
 ---
 
@@ -144,21 +144,19 @@ To enable OTP delivery via email, follow these steps:
 
 ---
 
-##  ✅ How to Use
+## ✅ How to Use
 
-🎓 Students
+### 🎓 Students
+1. Visit: http://localhost/DigiResult/Login.php
+2. Enter IEN/Seat Number and registered email
+3. Click **Send OTP**
+4. Enter the OTP received on email
+5. View result instantly
 
-  Visit : http://localhost/DigiResult/Login.php
-  Enter IEN/Seat Number and registered email
-  Click Send OTP
-  Enter the OTP received on email
-  View result instantly
-
-🛠 Administrators
-
-  Visit the same link
-  Enter admin credentials
-  Access dashboard for management tasks
+### 🛠 Administrators
+1. Visit the same link
+2. Enter admin credentials
+3. Access dashboard for management tasks
 
 ---
 
@@ -173,18 +171,16 @@ To enable OTP delivery via email, follow these steps:
 
 ## ✅ Future Enhancements
 
-  Printable PDF results
-  Analytics dashboard
-  Email notifications
-  Multi-semester result tracking
+- Printable PDF results
+- Analytics dashboard
+- Email notifications
+- Multi-semester result tracking
 
 ---
 
 ## ✅ Support
 
 For queries or assistance, please reach out through the project repository or issue tracker.
-
-## ✅ DigiResult is ready for secure, efficient, and paperless result management.
 
 ---
 
