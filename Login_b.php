@@ -41,24 +41,24 @@ if (isset($_POST['login_email']) && isset($_POST['password'])) {
             $_SESSION['user_id'] = $user_id;
 
             // Redirect to the admin page
-            header("Location: Admin.html");
+            header("Location: Admin.php");
             exit;
         } else {
             // Incorrect password
             $em = "Incorrect username or password";
-            header("Location: Login.php?error=$em");
+            header("Location: index.php?error=" . urlencode($em));
             exit;
         }
     } else {
         // No user found with that email
         $em = "Incorrect username or password";
-        header("Location: Login.php?error=$em");
+        header("Location: index.php?error=" . urlencode($em));
         exit;
     }
 
 } else {
     // Redirect if POST data is not set
-    header("Location: Login.php");
+    header("Location: index.php");
     exit;
 }
 ?>

@@ -5,17 +5,16 @@ DigiResult is a secure and efficient web-based platform designed to simplify aca
 ---
 
 ## 📌 Table of Contents
-- [About the System](#-about-the-system)
-- [Key Features](#-key-features)
-- [Technology Stack](#-technology-stack)
-- [System Workflow](#-system-workflow)
-- [Setup & Installation](#-setup--installation)
-- [SMTP & OTP Email Configuration](#-smtp--otp-email-configuration)
-- [How to Use](#-how-to-use)
-- [Troubleshooting](#-troubleshooting)
-- [Future Enhancements](#-future-enhancements)
-- [Support](#-support)
-- [Developed By](#-developed-by)
+- [About the System](#about-the-system)
+- [Key Features](#key-features)
+- [Technology Stack](#technology-stack)
+- [System Workflow](#system-workflow)
+- [Setup & Installation](#setup--installation)
+- [SMTP & OTP Email Configuration](#smtp--otp-email-configuration)
+- [How to Use](#how-to-use)
+- [Troubleshooting](#troubleshooting)
+- [Future Enhancements](#future-enhancements)
+- [Support](#support)
 
 ---
 
@@ -147,7 +146,7 @@ To enable OTP delivery via email, follow these steps:
 ## ✅ How to Use
 
 ### 🎓 Students
-1. Visit: http://localhost/DigiResult/Login.php
+1. Visit: http://localhost/DigiResult/index.php
 2. Enter IEN/Seat Number and registered email
 3. Click **Send OTP**
 4. Enter the OTP received on email

@@ -1,4 +1,12 @@
 <?php
+// Start session first before any output
+session_start();
+
+// Prevent browser caching to stop back button access
+header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
+header("Pragma: no-cache");
+header("Expires: 0");
+
 // Database connection
 $servername = "localhost";
 $username = "root";
@@ -11,7 +19,11 @@ if (!$conn) {
     die("Connection failed: " . mysqli_connect_error());
 }
 
-session_start();
+// Redirect if already logged in
+if (isset($_SESSION['student_logged_in']) && $_SESSION['student_logged_in'] === true) {
+    header("Location: Certificate.php");
+    exit();
+}
 
 // Function to check if results are live
 function areResultsLive()
@@ -21,8 +33,8 @@ function areResultsLive()
 
 // Handle OTP generation and sending
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ien_number']) && isset($_POST['email'])) {
-    $ien_number = $_POST['ien_number'];
-    $email = $_POST['email'];
+    $ien_number = mysqli_real_escape_string($conn, $_POST['ien_number']);
+    $email = mysqli_real_escape_string($conn, $_POST['email']);
 
     // Query the database to verify ien_number and email
     $sql = "SELECT * FROM students WHERE ien_number = '$ien_number' AND email = '$email'";
@@ -33,6 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ien_number']) && isset
         $otp = rand(100000, 999999); // 6-digit OTP
         $_SESSION['otp'] = $otp;  // Store the OTP in session
         $_SESSION['email'] = $email;
+        $_SESSION['ien_number'] = $ien_number;
 
         // Send OTP via email (assuming you have a mail server configured)
         $subject = "NHITM Result OTP";
@@ -56,15 +69,51 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['otp_verification'])) {
 
     // Check if OTP matches the session OTP
     if (isset($_SESSION['otp']) && $entered_otp == $_SESSION['otp']) {
-        unset($_SESSION['otp']);
-        // OTP is correct, redirect to another page
-        echo "<script> window.location.href = 'Certificate.php?live=" . (areResultsLive() ? '1' : '0') . "';</script>";
-        header("Location: Certificate.php?batch=" . urlencode($batch) . "&semester=" . urlencode($semester) . "&department=" . urlencode($department));
-        exit();
+        unset($_SESSION['otp']); // Remove OTP after verification
+        
+        // Fetch student details and create persistent login session
+        if (isset($_SESSION['email']) && isset($_SESSION['ien_number'])) {
+            $email = $_SESSION['email'];
+            $ien_number = $_SESSION['ien_number'];
+            
+            // Fetch student ID from database
+            $studentQuery = "SELECT id, first_name, last_name FROM students WHERE email = '" . mysqli_real_escape_string($conn, $email) . "' AND ien_number = '" . mysqli_real_escape_string($conn, $ien_number) . "'";
+            $studentResult = mysqli_query($conn, $studentQuery);
+            
+            if ($studentResult && mysqli_num_rows($studentResult) > 0) {
+                $studentData = mysqli_fetch_assoc($studentResult);
+                
+                // Create persistent student login session
+                $_SESSION['student_id'] = $studentData['id'];
+                $_SESSION['student_email'] = $email;
+                $_SESSION['student_ien'] = $ien_number;
+                $_SESSION['student_name'] = $studentData['first_name'] . ' ' . $studentData['last_name'];
+                $_SESSION['student_logged_in'] = true;
+                $_SESSION['login_time'] = time();
+                
+                // Clear temporary session variables
+                unset($_SESSION['email']);
+                unset($_SESSION['ien_number']);
+                
+                // Redirect to Certificate page
+                header("Location: Certificate.php");
+                exit();
+            } else {
+                echo "<script>alert('Student data not found. Please try again.');</script>";
+                unset($_SESSION['email']);
+                unset($_SESSION['ien_number']);
+            }
+        } else {
+            echo "<script>alert('Session expired. Please try again.');</script>";
+        }
     } else {
         // OTP is incorrect
         echo "<script>alert('Incorrect OTP. Please try again.');</script>";
+        unset($_SESSION['otp']);
+        unset($_SESSION['email']);
+        unset($_SESSION['ien_number']);
     }
+}
 }
 
 ?>
@@ -320,7 +369,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['otp_verification'])) {
 
     <div class="main-container">
         <div class="form-container">
-            <form class="otp-form" method="POST" action="Login.php">
+            <form class="otp-form" method="POST" action="index.php">
                 <h2>Welcome to Student Result Portal</h2>
                 <div class="form-group">
                     <label for="ien_number">IEN Number:</label>
