@@ -1,0 +1,181 @@
+.page-admin{background:#f4f7f4}.admin-layout{display:grid;grid-template-columns:230px minmax(0,1fr);min-height:100vh}.sidebar{background:#123d25;color:#eaf7ee;position:sticky;top:0;height:100vh;padding:18px 12px;display:flex;flex-direction:column}.side-brand{display:flex;align-items:center;gap:10px;padding:10px 12px 22px}.side-brand img{width:37px;height:37px;object-fit:contain}.side-brand strong{display:block}.side-brand small{display:block;font-size:10px;color:#a9d0b7}.sidebar nav{display:grid;gap:4px}.side-link{display:block;padding:11px 12px;border-radius:9px;color:#c9dfcf;font-size:13px;font-weight:700}.side-link:hover,.side-link.active{background:var(--green);color:#fff}.side-footer{margin-top:auto;border-top:1px solid rgba(255,255,255,.12);padding-top:12px}.admin-main{min-width:0}.admin-topbar{min-height:92px;background:#fff;border-bottom:1px solid var(--line);padding:18px 30px;display:flex;align-items:center;justify-content:space-between;gap:18px;position:sticky;top:0;z-index:40}.admin-topbar h1{font-size:24px;margin:3px 0 0}.admin-user{display:flex;align-items:center;gap:10px}.admin-user strong,.admin-user small{display:block}.admin-user small{font-size:11px;color:var(--muted)}.avatar{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#eaf8ef;color:var(--green-dark);font-weight:900}.admin-content{padding:26px 30px 40px}.toolbar{display:flex;justify-content:space-between;align-items:center;gap:14px;margin-bottom:18px}.toolbar-actions{display:flex;gap:9px;flex-wrap:wrap}.form-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}.filters{padding:16px}.section-heading{margin:0 0 6px;font-size:17px}.section-copy{margin:0 0 18px;color:var(--muted);font-size:13px}.action-row{display:flex;gap:7px;flex-wrap:wrap}.result-grid{display:grid;gap:16px}.student-result-card{padding:16px}.student-result-head{display:flex;justify-content:space-between;gap:18px;align-items:center;margin-bottom:12px}.marks-grid{display:grid;grid-template-columns:1.8fr repeat(3,minmax(80px,.55fr)) 90px 110px;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:10px;overflow:hidden}.marks-grid>div{background:#fff;padding:8px 10px;font-size:12px}.marks-grid.header>div{background:#f7f9fc;font-weight:800;text-transform:uppercase;color:#65758a}.context-preview{font-size:12px;color:var(--muted)}.inline-form{display:inline}.admin-note{font-size:12px;color:var(--muted);margin-top:8px}.health-grid{display:grid;gap:10px}.health-item{padding:14px;border:1px solid var(--line);border-radius:11px;background:#fff;display:flex;justify-content:space-between;gap:18px}.ok{color:var(--success);font-weight:800}.bad{color:var(--danger);font-weight:800}@media(max-width:950px){.admin-layout{grid-template-columns:1fr}.sidebar{position:relative;height:auto}.sidebar nav{grid-template-columns:repeat(3,minmax(0,1fr))}.side-footer{margin-top:12px}.form-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}@media(max-width:620px){.admin-topbar{padding:15px 16px;align-items:flex-start}.admin-topbar h1{font-size:20px}.admin-user div{display:none}.admin-content{padding:18px 12px 30px}.sidebar nav{grid-template-columns:repeat(2,minmax(0,1fr))}.form-grid{grid-template-columns:1fr}.toolbar{align-items:flex-start;flex-direction:column}.marks-grid{grid-template-columns:1.5fr repeat(3,70px) 80px 92px}.marks-grid>div{font-size:11px;padding:7px}}
+
+/* Result editor */
+.marks-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:12px;background:#fff}
+.marks-grid{min-width:760px;border:0;border-radius:0}
+.marks-grid>div{display:flex;align-items:center;min-height:56px}
+.marks-header>div{background:#f1f8f3!important;color:var(--green-dark)!important;font-size:11px!important;letter-spacing:.07em;text-transform:uppercase;font-weight:800!important}
+.result-mark-row>div{background:#fff}
+.result-mark-row .subject-name-cell{font-weight:700;color:var(--ink)}
+.mark-input{min-width:0;padding:9px 10px}
+.result-status-cell,.result-action-cell{justify-content:center;text-align:center}
+.result-status-cell .badge{min-width:76px;justify-content:center;text-align:center;line-height:1.2}
+.result-action-cell .btn{min-width:64px}
+.sr-only{position:absolute!important;width:1px!important;height:1px!important;padding:0!important;margin:-1px!important;overflow:hidden!important;clip:rect(0,0,0,0)!important;white-space:nowrap!important;border:0!important}
+/* Subject management filters */
+.subject-filter-panel{margin-top:20px;padding:16px;border:1px solid #d6e8da;border-radius:12px;background:#f8fcf9}
+.subject-filter-heading{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
+.subject-filter-heading strong{display:block;font-size:13px;color:var(--ink)}
+.subject-filter-heading span{display:block;margin-top:2px;font-size:12px;color:var(--muted)}
+.subject-filters{display:grid;grid-template-columns:1.4fr repeat(3,minmax(130px,1fr)) auto;gap:12px;align-items:end}
+.subject-filters .field{margin:0}
+.subject-list-meta{margin-top:16px;margin-left:8px;font-size:12px;color:var(--muted)}
+.subject-list-meta strong{color:var(--ink)}
+.component-option{display:flex;align-items:center;gap:7px;padding:11px 12px;border:1px solid var(--line);border-radius:10px;background:#fbfdfb;margin:0;cursor:pointer}
+.component-option input{accent-color:var(--green);width:16px;height:16px}
+@media(max-width:900px){.subject-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.subject-filter-action{padding-bottom:0}}
+@media(max-width:620px){.subject-filter-heading{align-items:flex-start;flex-direction:column}.subject-filters{grid-template-columns:1fr}.subject-filter-action{padding-bottom:0}.marks-grid{min-width:700px}}
+
+
+/* Academic setup: full-width stacked sections so subject filters have room. */
+.academic-sections{grid-template-columns:1fr}
+.academic-sections>.card{min-width:0}
+.subject-filters{grid-template-columns:minmax(220px,1.5fr) repeat(3,minmax(160px,1fr)) minmax(130px,.65fr)}
+.subject-filters>*{min-width:0}
+.subject-filter-action{width:100%;}
+.subject-filter-action .btn{width:100%}
+@media(max-width:1100px){.subject-filters{grid-template-columns:repeat(3,minmax(0,1fr))}.subject-filter-action{grid-column:span 1}}
+@media(max-width:760px){.subject-filters{grid-template-columns:repeat(2,minmax(0,1fr))}.subject-filter-action{grid-column:span 2}}
+@media(max-width:560px){.subject-filters{grid-template-columns:1fr}.subject-filter-action{grid-column:auto}}
+
+/* Semantic layout classes migrated from page-level inline CSS. */
+.dashboard-toolbar {
+    margin-bottom: 18px;
+}
+
+.dashboard-detail {
+    font-size: 12px;
+}
+
+.health-heading {
+    margin-top: 5px;
+}
+
+.health-form {
+    align-items: end;
+    margin-bottom: 20px;
+}
+
+.health-recipient-field {
+    margin: 0;
+    flex: 1;
+    min-width: 240px;
+}
+
+.health-card {
+    box-shadow: none;
+    background: #f8fcf9;
+}
+
+.health-detail {
+    font-size: 12px;
+}
+
+.account-panel {
+    max-width: 680px;
+}
+
+.account-heading {
+    margin-top: 5px;
+}
+
+.student-filter-copy {
+    margin: 3px 0 0;
+}
+
+.student-search-field {
+    flex: 1;
+    min-width: 220px;
+}
+
+.student-table-card {
+    margin-top: 18px;
+}
+
+.table-wrap-flat {
+    border: 0;
+}
+
+.student-table-small {
+    font-size: 11px;
+}
+
+.student-form-heading {
+    margin-top: 5px;
+}
+
+.field-full {
+    grid-column: 1 / -1;
+}
+
+.preview-context {
+    margin: 3px 0 0;
+}
+
+.preview-student-card {
+    margin-bottom: 14px;
+}
+
+.preview-student-ien {
+    font-size: 12px;
+}
+
+.table-wide-results {
+    min-width: 620px;
+}
+
+.results-context-copy {
+    margin: 3px 0 0;
+}
+
+.results-context-card {
+    margin-top: 18px;
+}
+
+.results-context-toolbar {
+    margin-bottom: 12px;
+}
+
+.results-count-copy {
+    margin: 2px 0 0;
+}
+
+.editor-copy {
+    margin: 2px 0 0;
+}
+
+.editor-student-ien {
+    font-size: 12px;
+}
+
+.academic-heading {
+    margin-top: 5px;
+}
+
+.lookup-card {
+    box-shadow: none;
+}
+
+.lookup-form-spaced {
+    margin-top: 10px;
+}
+
+.lookup-badge {
+    padding-right: 4px;
+}
+
+.lookup-values {
+    margin-top: 10px;
+}
+
+.lookup-table {
+    margin-top: 10px;
+}
+
+.icon-button {
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    padding: 0 3px;
+}

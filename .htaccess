@@ -1,0 +1,41 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set Permissions-Policy "geolocation=(), microphone=(), camera=()"
+</IfModule>
+
+# Never serve application internals or database/log files directly.
+<FilesMatch "\.(sql|md|log|ini|env|bak|old|lock)$">
+    Require all denied
+</FilesMatch>
+
+RewriteEngine On
+
+# Protect application internals.
+RewriteRule ^(?:config|includes|services|database|storage|tools)(?:/|$) - [F,L]
+
+# Preserve the old POST-based admin login entry point.
+RewriteRule ^Login_b\.php$ actions/admin-login.php [R=307,L]
+
+# Redirect old application entry points to their maintained routes.
+RewriteRule ^Admin\.html$ admin/login.php [R=302,L]
+RewriteRule ^Student_Add\.php$ admin/students/create.php [R=302,L]
+RewriteRule ^Student_Update\.php$ admin/students/edit.php [R=302,L]
+RewriteRule ^Student_Delete\.html$ admin/students/index.php [R=302,L]
+RewriteRule ^Batch_Details\.php$ admin/academic/index.php [R=302,L]
+RewriteRule ^fetch_student\.php$ admin/students/index.php [R=302,L]
+RewriteRule ^student\.php$ admin/students/index.php [R=302,L]
+RewriteRule ^toggle_live\.php$ admin/results/index.php [R=302,L]
+RewriteRule ^Update_Batch_1\.php$ admin/academic/index.php [R=302,L]
+RewriteRule ^Admin_Results_Details_1\.php$ admin/results/index.php [R=302,L]
+RewriteRule ^Admin_Results_Details_2\.php$ admin/results/editor.php [R=302,L]
+RewriteRule ^Result_Page\.php$ admin/results/index.php [R=302,L]
+RewriteRule ^view_results\.php$ admin/results/view.php [R=302,L]
+RewriteRule ^Certificate\.php$ certificate.php [R=302,L]
+
+# These legacy files exposed only a compatibility DB connection/example.
+# They have no maintained application route.
+RewriteRule ^connection(?:\.example)?\.php$ - [G,L]

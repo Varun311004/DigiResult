@@ -1,235 +1,576 @@
 <?php
-// Start session first
-session_start();
 
-// Prevent browser caching to stop back button access
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-header("Expires: 0");
+declare(strict_types=1);
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "srms";
-$conn = mysqli_connect($servername, $username, $password, $dbname);
+require_once __DIR__ . '/includes/layout.php';
+require_once __DIR__ . '/includes/student-queries.php';
 
-// Check connection
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+require_student();
+
+
+/*
+|--------------------------------------------------------------------------
+| STUDENT
+|--------------------------------------------------------------------------
+*/
+
+$student = get_student(
+    (int) $_SESSION['student_id']
+);
+
+if (!$student) {
+
+    logout_all();
+
+    flash(
+        'error',
+        'Your student record is no longer available. Please contact the institute.'
+    );
+
+    redirect('index.php');
 }
 
-// Function to check if results are live
-function areResultsLive($batch, $semester, $department)
-{
-    $key = "{$batch}_{$semester}_{$department}";
-    return isset($_SESSION['results_live'][$key]) && $_SESSION['results_live'][$key];
+
+/*
+|--------------------------------------------------------------------------
+| PUBLICATION
+|--------------------------------------------------------------------------
+*/
+
+$publicationId = safe_int(
+    $_GET['publication'] ?? null
+);
+
+$publication = get_publication_for_student(
+    (int) $student['id'],
+    $publicationId
+);
+
+if (!$publication) {
+
+    flash(
+        'error',
+        'That published result could not be found.'
+    );
+
+    redirect('student/dashboard.php');
 }
 
-// Check if the user is logged in
-if (!isset($_SESSION['email'])) {
-    header("Location: Login.php");
-    exit();
+
+/*
+|--------------------------------------------------------------------------
+| ACADEMIC CONTEXT
+|--------------------------------------------------------------------------
+*/
+
+$year = (string) $publication['year'];
+$batch = (string) $publication['batch'];
+$semester = (string) $publication['semester'];
+$department = (string) $publication['department'];
+
+
+/*
+|--------------------------------------------------------------------------
+| GET ALL SUBJECTS
+|--------------------------------------------------------------------------
+|
+| This returns:
+|
+|   configured subjects
+|   +
+|   legacy/result subjects
+|
+| and attaches this student's marks where available.
+|--------------------------------------------------------------------------
+*/
+
+$rows = get_certificate_rows_for_student(
+    (string) $student['ien_number'],
+    $year,
+    $batch,
+    $semester,
+    $department
+);
+
+
+/*
+|--------------------------------------------------------------------------
+| CALCULATE TOTALS
+|--------------------------------------------------------------------------
+|
+| These are raw marks totals from the data currently available.
+|
+| Official:
+|   credits
+|   grade points
+|   SGPI
+|   CGPI
+|
+| are deliberately NOT invented.
+|--------------------------------------------------------------------------
+*/
+
+$grandTotal = 0;
+
+foreach ($rows as $row) {
+
+    $grandTotal +=
+        (int) ($row['TW_marks'] ?? 0)
+        +
+        (int) ($row['PR_marks'] ?? 0)
+        +
+        (int) ($row['ESE_marks'] ?? 0);
 }
 
-$email = $_SESSION['email'];
 
-// Fetch student data
-$studentQuery = "SELECT * FROM students WHERE email = '$email'";
-$studentResult = $conn->query($studentQuery);
+/*
+|--------------------------------------------------------------------------
+| STUDENT DATA
+|--------------------------------------------------------------------------
+*/
 
-if ($studentResult->num_rows > 0) {
-    $studentData = $studentResult->fetch_assoc();
-    $ien_number = $studentData['ien_number'];
-    $studentName = $studentData['first_name'] . ' ' . $studentData['last_name'];
-    $department = $studentData['department'];
-    $semester = $studentData['semester'];
-    $batch = $studentData['batch'];
+$studentName = trim(
+    (string) $student['first_name']
+    . ' '
+    . (string) $student['last_name']
+);
 
-    // Check if results are live for this student's batch
-    if (!areResultsLive($batch, $semester, $department)) {
-        echo '<!DOCTYPE html>
-        <html lang="en">
-        <head>
-            <meta charset="UTF-8">
-            <meta name="viewport" content="width=device-width, initial-scale=1.0">
-            <title>Results Not Available</title>
-            <style>
-                body {
-                font-family: Arial, sans-serif;
-                background-color: #f0f2f5;
-                display: flex;
-                justify-content: center;
-                align-items: center;
-                height: 100vh;
-                margin: 0;
-            }
-            .message {
-                background-color: #ffffff;
-                border-radius: 8px;
-                box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-                padding: 40px;
-                text-align: center;
-                width: 400px;
-            }
-            h1 {
-                color: #1a73e8;
-                font-size: 24px;
-                margin-bottom: 20px;
-            }
-            p {
-                color: #5f6368;
-                font-size: 16px;
-                line-height: 1.5;
-            }
-            </style>
-        </head>
-        <body>
-            <div class="message">
-                <h1>Results Not Available</h1>
-                <p>The results are currently not live.<br> Please check back later.</p>
-            </div>
-        </body>
-        </html>';
-        exit;
-    }
+$seatNumber = (string) (
+    $student['student_number'] ?? ''
+);
 
-    // Fetch results
-    $resultsQuery = "SELECT * FROM results WHERE ien_number = '$ien_number'";
-    $resultsResult = $conn->query($resultsQuery);
+$ienNumber = (string) (
+    $student['ien_number'] ?? ''
+);
 
-    $results = [];
-    while ($row = $resultsResult->fetch_assoc()) {
-        $results[] = $row;
-    }
+
+/*
+|--------------------------------------------------------------------------
+| TABLE DIMENSIONS
+|--------------------------------------------------------------------------
+|
+| The selected template is 1086 × 1448.
+|
+| Printed table:
+|
+| x = 34
+| right = 1054
+| header bottom = 513
+| main table bottom = 970
+|
+| Therefore the dynamic rows must occupy ONLY:
+|
+|   y = 513 → 970
+|
+| The template itself already contains:
+|
+|   - table header
+|   - Total row
+|   - Remark row
+|
+| We only draw the subject rows.
+|--------------------------------------------------------------------------
+*/
+
+$subjectCount = count($rows);
+
+
+/*
+|--------------------------------------------------------------------------
+| Dynamic font sizing
+|--------------------------------------------------------------------------
+*/
+
+if ($subjectCount >= 16) {
+    $subjectRowsClass = 'certificate-rows-16-plus';
+} elseif ($subjectCount >= 13) {
+    $subjectRowsClass = 'certificate-rows-13-15';
+} elseif ($subjectCount >= 10) {
+    $subjectRowsClass = 'certificate-rows-10-12';
+} elseif ($subjectCount >= 7) {
+    $subjectRowsClass = 'certificate-rows-7-9';
 } else {
-    die("Student not found");
+    $subjectRowsClass = 'certificate-rows-1-6';
 }
+
+
+/*
+|--------------------------------------------------------------------------
+| PAGE
+|--------------------------------------------------------------------------
+*/
+
+page_start(
+    'Certificate / Grade Card',
+    'student',
+    '',
+    ['assets/css/certificate.css']
+);
+
+student_nav();
+
+render_flashes();
+
 ?>
+<main class="student-shell certificate-page">
 
-<!DOCTYPE html>
-<html lang="en">
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Student Results</title>
-    <style>
-        body {
-            font-family: 'Arial', sans-serif;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-            background-color: #f0f2f5;
-            color: #333;
-        }
+    <!-- ==========================================================
+         ACTION BUTTONS
+    =========================================================== -->
 
-        .container {
-            max-width: 900px;
-            margin: auto;
-            background: white;
-            padding: 30px;
-            border-radius: 8px;
-            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
-        }
+    <div class="certificate-actions certificate-actions-screen">
 
-        h1,
-        h2 {
-            color: #2c3e50;
-            text-align: center;
-            margin-bottom: 20px;
-        }
+        <a
+            class="btn btn-secondary"
+            href="<?= e(
+                dr_url(
+                    'student/result.php?publication='
+                    . (int) $publication['id']
+                )
+            ) ?>"
+        >
+            Back to result
+        </a>
 
-        .student-info {
-            background-color: #ecf0f1;
-            padding: 20px;
-            border-radius: 8px;
-            margin-bottom: 30px;
-        }
+        <button
+            class="btn btn-primary"
+            type="button"
+            onclick="window.print()"
+        >
+            Print / Save PDF
+        </button>
 
-        .student-info p {
-            margin: 10px 0;
-            font-size: 16px;
-        }
+    </div>
 
-        .student-info strong {
-            font-weight: bold;
-            color: #34495e;
-        }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-            background-color: white;
-        }
+    <!-- ==========================================================
+         CERTIFICATE SHEET
+    =========================================================== -->
 
-        th,
-        td {
-            padding: 12px;
-            text-align: left;
-            border-bottom: 1px solid #ddd;
-        }
+    <section
+        class="grade-card"
+        aria-label="DigiResult Grade Card"
+    >
 
-        th {
-            background-color: #3498db;
-            color: white;
-            font-weight: bold;
-        }
 
-        tr:nth-child(even) {
-            background-color: #f2f2f2;
-        }
+        <!-- ======================================================
+             STATIC TEMPLATE IMAGE
+        ======================================================= -->
 
-        tr:hover {
-            background-color: #e0e0e0;
-        }
+        <img
+            class="grade-card-template"
+            src="<?= e(
+                dr_url(
+                    'assets/images/certificate.png'
+                )
+            ) ?>"
+            alt="New Horizon Institute Grade Card"
+        >
 
-        .total-row {
-            font-weight: bold;
-            background-color: #2ecc71;
-            color: #34495e;
-        }
-    </style>
-</head>
 
-<body>
-    <div class="container">
-        <h1>Student Results</h1>
-        <div class="student-info">
-            <p><strong>Name:</strong> <?= $studentName ?></p>
-            <p><strong>IEN Number:</strong> <?= $ien_number ?></p>
-            <p><strong>Department:</strong> <?= $department ?></p>
-            <p><strong>Semester:</strong> <?= $semester ?></p>
-            <p><strong>Batch:</strong> <?= $batch ?></p>
+        <!-- ======================================================
+             DYNAMIC OVERLAY
+        ======================================================= -->
+
+        <div class="grade-card-layer">
+
+
+            <!-- ==================================================
+                 STUDENT DETAILS
+            ================================================== -->
+
+            <div class="dynamic-student-details">
+
+                <!-- NAME -->
+                <div class="student-value student-name">
+                    <?= e($studentName) ?>
+                </div>
+
+
+                <!-- SEAT NUMBER -->
+                <div class="student-value student-seat">
+                    <?= e($seatNumber) ?>
+                </div>
+
+
+                <!-- SEM -->
+                <div class="student-value student-sem">
+                    <?= e($semester) ?>
+                </div>
+
+
+                <!-- YEAR -->
+                <div class="student-value student-year">
+                    <?= e($year) ?>
+                </div>
+
+
+                <!-- IEN -->
+                <div class="student-value student-ien">
+                    <?= e($ienNumber) ?>
+                </div>
+
+
+                <!-- BRANCH -->
+                <div class="student-value student-branch">
+                    <?= e($department) ?>
+                </div>
+
+
+                <!-- EXAMINATION
+                     UNKNOWN FOR NOW → intentionally blank
+                -->
+                <div class="student-value student-examination"></div>
+
+
+                <!-- SERIAL NUMBER
+                     UNKNOWN FOR NOW → intentionally blank
+                -->
+                <div class="student-value student-serial"></div>
+
+            </div>
+
+
+            <!-- ==================================================
+                 DYNAMIC SUBJECT BODY
+            ================================================== -->
+
+            <?php if ($subjectCount > 0): ?>
+
+                <div
+                    class="dynamic-subject-body <?= e($subjectRowsClass) ?>"
+                >
+
+                    <?php foreach (
+                        $rows as $index => $row
+                    ): ?>
+
+                        <?php
+
+                        $tw = $row['TW_marks'];
+                        $pr = $row['PR_marks'];
+                        $ese = $row['ESE_marks'];
+
+                        $overall =
+                            (int) ($tw ?? 0)
+                            +
+                            (int) ($pr ?? 0)
+                            +
+                            (int) ($ese ?? 0);
+
+                        ?>
+
+                        <div class="subject-row">
+
+
+                            <!-- =================================
+                                 COURSE CODE
+                                 UNKNOWN → BLANK
+                            ================================== -->
+
+                            <div class="subject-cell course-code-cell"></div>
+
+
+                            <!-- =================================
+                                 COURSE TITLE
+                            ================================== -->
+
+                            <div
+                                class="subject-cell course-title-cell"
+                                title="<?= e(
+                                    str_replace(
+                                        '_',
+                                        ' ',
+                                        (string) $row['subject']
+                                    )
+                                ) ?>"
+                            >
+                                <?= e(
+                                    str_replace(
+                                        '_',
+                                        ' ',
+                                        (string) $row['subject']
+                                    )
+                                ) ?>
+                            </div>
+
+
+                            <!-- =================================
+                                 COURSE CREDITS
+                                 UNKNOWN → BLANK
+                            ================================== -->
+
+                            <div class="subject-cell course-credit-cell"></div>
+
+
+                            <!-- =================================
+                                 ESE / PR-OR
+
+                                 We have two known values:
+                                   ESE
+                                   PR
+
+                                 The template has these stacked
+                                 under the same grade group.
+                            ================================== -->
+
+                            <div class="subject-cell ese-pr-cell">
+
+                                <div class="mark-stack">
+
+                                    <span>
+                                        <?= $ese === null
+                                            ? ''
+                                            : e((string) $ese)
+                                        ?>
+                                    </span>
+
+                                    <span>
+                                        <?= $pr === null
+                                            ? ''
+                                            : e((string) $pr)
+                                        ?>
+                                    </span>
+
+                                </div>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 IA / TW
+
+                                 IA is unknown.
+                                 TW is known.
+                            ================================== -->
+
+                            <div class="subject-cell ia-tw-cell">
+
+                                <?php if ($tw !== null): ?>
+
+                                    <?= e(
+                                        (string) $tw
+                                    ) ?>
+
+                                <?php endif; ?>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 OVERALL
+                            ================================== -->
+
+                            <div class="subject-cell overall-cell">
+
+                                <?php
+
+                                $hasAnyMark =
+                                    $tw !== null
+                                    ||
+                                    $pr !== null
+                                    ||
+                                    $ese !== null;
+
+                                ?>
+
+                                <?php if ($hasAnyMark): ?>
+
+                                    <strong>
+                                        <?= e(
+                                            (string) $overall
+                                        ) ?>
+                                    </strong>
+
+                                <?php endif; ?>
+
+                            </div>
+
+
+                            <!-- =================================
+                                 CREDIT EARNED
+                                 UNKNOWN
+                            ================================== -->
+
+                            <div class="subject-cell credit-earned-cell"></div>
+
+
+                            <!-- =================================
+                                 GRADE POINT
+                                 UNKNOWN
+                            ================================== -->
+
+                            <div class="subject-cell grade-point-cell"></div>
+
+
+                            <!-- =================================
+                                 C × G
+                                 UNKNOWN
+                            ================================== -->
+
+                            <div class="subject-cell cxg-cell"></div>
+
+                        </div>
+
+                    <?php endforeach; ?>
+
+                </div>
+
+
+                <!-- =================================================
+                     RAW MARK TOTAL
+
+                     Only the overall raw-mark total is currently
+                     known.
+                ================================================== -->
+
+                <div class="dynamic-total-value">
+
+                    <?= e(
+                        (string) $grandTotal
+                    ) ?>
+
+                </div>
+
+            <?php else: ?>
+
+                <div class="dynamic-no-subjects">
+                    No subjects are configured for this academic context.
+                </div>
+
+            <?php endif; ?>
+
+
+            <!-- ==================================================
+                 FUTURE DATABASE FIELDS
+            ================================================== -->
+
+            <!--
+                Remark  → blank
+                SGPI    → blank
+                CGPI    → blank
+                Exam    → blank
+                Serial  → blank
+                Date    → blank
+                Course code → blank
+                Credits → blank
+                Credit earned → blank
+                Grade point → blank
+                C × G → blank
+
+                These should be populated later when those fields
+                are added to the database.
+            -->
+
         </div>
 
-        <h2>Results</h2>
-        <table>
-            <tr>
-                <th>Subject</th>
-                <th>TW Marks</th>
-                <th>PR Marks</th>
-                <th>ESE Marks</th>
-                <th>Total</th>
-            </tr>
-            <?php $total = 0; ?>
-            <?php foreach ($results as $result): ?>
-                <tr>
-                    <td><?= $result['subject'] ?></td>
-                    <td><?= $result['TW_marks'] ?></td>
-                    <td><?= $result['PR_marks'] ?></td>
-                    <td><?= $result['ESE_marks'] ?></td>
-                    <td><?= $result['TW_marks'] + $result['PR_marks'] + $result['ESE_marks'] ?></td>
-                </tr>
-                <?php $total += $result['TW_marks'] + $result['PR_marks'] + $result['ESE_marks']; ?>
-            <?php endforeach; ?>
-            <tr class="total-row">
-                <td colspan="4">Total</td>
-                <td><?= $total ?></td>
-            </tr>
-        </table>
-    </div>
-</body>
+    </section>
 
-</html>
+</main>
+
+
+
+
+
+<?php page_end(); ?>

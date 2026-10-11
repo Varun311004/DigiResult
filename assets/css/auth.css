@@ -1,0 +1,53 @@
+.auth-page{min-height:100vh;background:linear-gradient(180deg,#f7fbf8 0%,#eef7f0 100%)}.auth-layout{min-height:calc(100vh - 74px);display:grid;place-items:center;padding:36px 16px}.auth-shell{width:min(1040px,100%);display:grid;grid-template-columns:1.05fr .95fr;overflow:hidden}.auth-visual{background:var(--green);color:#fff;padding:44px;position:relative;display:flex;flex-direction:column;justify-content:space-between;min-height:540px}.auth-visual:after{content:"";position:absolute;right:-110px;bottom:-110px;width:300px;height:300px;border:1px solid rgba(255,255,255,.17);border-radius:50%}.auth-visual h2{font-size:34px;line-height:1.15;margin:10px 0 14px;max-width:420px}.auth-visual p{color:#d9f0df;max-width:470px}.auth-points{display:grid;gap:12px;margin-top:28px}.auth-point{display:flex;gap:10px;align-items:flex-start}.auth-dot{width:8px;height:8px;margin-top:7px;border-radius:50%;background:#8de0a7;flex:none}.auth-form{background:#fff;padding:38px}.otp-box{margin-top:20px;padding-top:20px;border-top:1px solid var(--line)}.otp-code{letter-spacing:.32em;text-align:center;font-size:22px;font-weight:800}.auth-note{font-size:12px;color:var(--muted);background:#f4faf6;border-radius:10px;padding:10px 12px}.admin-link{font-size:13px;color:var(--green-dark);font-weight:700}@media(max-width:760px){.auth-shell{grid-template-columns:1fr}.auth-visual{min-height:auto;padding:28px}.auth-visual h2{font-size:28px}.auth-form{padding:28px}}
+
+.otp-box{display:flex;justify-content:space-between;align-items:center;gap:12px;flex-wrap:wrap}
+.otp-resend-note{margin-top:8px;font-size:12px;color:var(--muted)}
+.btn:disabled{opacity:.65;cursor:not-allowed;transform:none!important;box-shadow:none!important}
+
+/* Semantic layout classes migrated from page-level inline CSS. */
+.auth-shell-single {
+    max-width: 760px;
+    grid-template-columns: 1fr;
+}
+
+.auth-eyebrow {
+    color: #b7cae2;
+}
+
+.auth-address {
+    font-size: 14px;
+    color: #fff;
+}
+
+.auth-title {
+    font-size: 28px;
+}
+
+.auth-subtitle {
+    font-size: 13px;
+}
+
+.auth-flash {
+    width: 100%;
+    margin: 18px 0 0;
+}
+
+.auth-form-spaced {
+    margin-top: 24px;
+}
+
+.auth-section-spaced {
+    margin-top: 24px;
+}
+
+.auth-help {
+    margin-top: 18px;
+}
+
+.auth-link-spaced {
+    margin-top: 18px;
+}
+
+.auth-link-spaced-small {
+    margin-top: 16px;
+}

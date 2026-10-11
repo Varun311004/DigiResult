@@ -1,425 +1,301 @@
 <?php
-// Start session first before any output
-session_start();
 
-// Prevent browser caching to stop back button access
-header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
-header("Pragma: no-cache");
-header("Expires: 0");
+declare(strict_types=1);
 
-// Database connection
-$servername = "localhost";
-$username = "root";
-$password = "";
-$dbname = "srms"; // Adjust this to your database name
-$conn = mysqli_connect($servername, $username, $password, $dbname);
+require_once __DIR__ . '/includes/layout.php';
 
-// Check connection
-if (!$conn) {
-    die("Connection failed: " . mysqli_connect_error());
+if (isset($_GET['reset'])) {
+    unset(
+        $_SESSION['otp_pending'],
+        $_SESSION['otp_pending_ien'],
+        $_SESSION['otp_pending_email'],
+        $_SESSION['otp_pending_started'],
+        $_SESSION['otp_resend_available_at'],
+        $_SESSION['dev_otp_hint']
+    );
+
+    header(
+        'Location: ' . dr_url('index.php')
+    );
+
+    exit;
 }
 
-// Redirect if already logged in
-if (isset($_SESSION['student_logged_in']) && $_SESSION['student_logged_in'] === true) {
-    header("Location: Certificate.php");
-    exit();
-}
+page_start('Student Portal');
 
-// Function to check if results are live
-function areResultsLive()
-{
-    return isset($_SESSION['results_live']) && $_SESSION['results_live'];
-}
+public_nav();
 
-// Handle OTP generation and sending
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['ien_number']) && isset($_POST['email'])) {
-    $ien_number = mysqli_real_escape_string($conn, $_POST['ien_number']);
-    $email = mysqli_real_escape_string($conn, $_POST['email']);
-
-    // Query the database to verify ien_number and email
-    $sql = "SELECT * FROM students WHERE ien_number = '$ien_number' AND email = '$email'";
-    $result = mysqli_query($conn, $sql);
-
-    if (mysqli_num_rows($result) > 0) {
-        // If a match is found, generate an OTP
-        $otp = rand(100000, 999999); // 6-digit OTP
-        $_SESSION['otp'] = $otp;  // Store the OTP in session
-        $_SESSION['email'] = $email;
-        $_SESSION['ien_number'] = $ien_number;
-
-        // Send OTP via email (assuming you have a mail server configured)
-        $subject = "NHITM Result OTP";
-        $message = "Your OTP for Student Result Portal is: " . $otp;
-        $headers = "From: noreply@nhitm.ac.in";
-
-        if (mail($email, $subject, $message, $headers)) {
-            echo "<script>alert('OTP sent to your email. Please check your inbox.');</script>";
-        } else {
-            echo "<script>alert('Failed to send OTP.');</script>";
-        }
-    } else {
-        // No match found for ien_number and email
-        echo "<script>alert('IEN Number and Email does not match.');</script>";
-    }
-}
-
-// Handle OTP verification
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['otp_verification'])) {
-    $entered_otp = $_POST['otp_verification'];
-
-    // Check if OTP matches the session OTP
-    if (isset($_SESSION['otp']) && $entered_otp == $_SESSION['otp']) {
-        unset($_SESSION['otp']); // Remove OTP after verification
-        
-        // Fetch student details and create persistent login session
-        if (isset($_SESSION['email']) && isset($_SESSION['ien_number'])) {
-            $email = $_SESSION['email'];
-            $ien_number = $_SESSION['ien_number'];
-            
-            // Fetch student ID from database
-            $studentQuery = "SELECT id, first_name, last_name FROM students WHERE email = '" . mysqli_real_escape_string($conn, $email) . "' AND ien_number = '" . mysqli_real_escape_string($conn, $ien_number) . "'";
-            $studentResult = mysqli_query($conn, $studentQuery);
-            
-            if ($studentResult && mysqli_num_rows($studentResult) > 0) {
-                $studentData = mysqli_fetch_assoc($studentResult);
-                
-                // Create persistent student login session
-                $_SESSION['student_id'] = $studentData['id'];
-                $_SESSION['student_email'] = $email;
-                $_SESSION['student_ien'] = $ien_number;
-                $_SESSION['student_name'] = $studentData['first_name'] . ' ' . $studentData['last_name'];
-                $_SESSION['student_logged_in'] = true;
-                $_SESSION['login_time'] = time();
-                
-                // Clear temporary session variables
-                unset($_SESSION['email']);
-                unset($_SESSION['ien_number']);
-                
-                // Redirect to Certificate page
-                header("Location: Certificate.php");
-                exit();
-            } else {
-                echo "<script>alert('Student data not found. Please try again.');</script>";
-                unset($_SESSION['email']);
-                unset($_SESSION['ien_number']);
-            }
-        } else {
-            echo "<script>alert('Session expired. Please try again.');</script>";
-        }
-    } else {
-        // OTP is incorrect
-        echo "<script>alert('Incorrect OTP. Please try again.');</script>";
-        unset($_SESSION['otp']);
-        unset($_SESSION['email']);
-        unset($_SESSION['ien_number']);
-    }
-}
-}
-
+$flashes = consume_flash();
+$pending = !empty($_SESSION['otp_pending']);
+$otpResendAt = (int) (
+    $_SESSION['otp_resend_available_at'] ?? 0
+);
+$otpResendRemaining = max(
+    0,
+    $otpResendAt - time()
+);
 ?>
 
-<!DOCTYPE html>
-<html lang="en">
-
-<head>
-    <meta charset="UTF-8" />
-    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Student Result Portal</title>
-    <link
-        href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css"
-        rel="stylesheet"
-        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH"
-        crossorigin="anonymous" />
-    <!-- Link to external CSS file -->
-    <link rel="stylesheet" href="style.css" />
-    <style>
-        /* General Reset */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
-
-        body {
-            font-family: 'Poppins', sans-serif;
-            background-color: #f0f0f5;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: flex-start;
-            height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: #354f8e;
-            width: 100%;
-            padding: 20px 0;
-        }
-
-        .logo {
-            height: 80px;
-            margin-right: 20px;
-        }
-
-        .header h1 {
-            color: white;
-            font-size: 2rem;
-        }
-
-        /* Main container */
-        .main-container {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-top: 100px;
-            gap: 100px;
-            /* space between the forms */
-        }
-
-        /* Form containers */
-        .form-container {
-            background-color: white;
-            padding: 40px;
-            border-radius: 12px;
-            margin-top: 30px;
-            margin-bottom: 50px;
-            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
-            width: 400px;
-            transition: transform 0.3s ease;
-        }
-
-        .form-container:hover {
-            transform: translateY(-5px);
-        }
-
-        .otp-form h2,
-        .login-form h2 {
-            font-size: 1.8rem;
-            color: #333;
-            margin-bottom: 25px;
-            text-align: center;
-            font-weight: 600;
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            font-size: 0.95rem;
-            color: #555;
-            margin-bottom: 5px;
-            display: block;
-        }
-
-        .form-group input {
-            width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-size: 1rem;
-            transition: border 0.3s ease;
-        }
-
-        .form-group input:focus {
-            outline: none;
-            border-color: #354f8e;
-            box-shadow: 0 0 8px rgba(53, 79, 142, 0.2);
-        }
-
-        .btn-submit {
-            width: 100%;
-            padding: 12px;
-            background-color: #354f8e;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            font-weight: 500;
-            cursor: pointer;
-            transition: background-color 0.3s ease, transform 0.3s ease;
-            margin-top: 15px;
-        }
-
-        .btn-submit:hover {
-            background-color: #2e4271;
-            transform: scale(1.05);
-        }
-
-        /* Separator between forms */
-        .separator {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            position: relative;
-            height: 300px;
-            width: 5px;
-            background: linear-gradient(180deg, #ff9943, #363767);
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            margin: 0 30px;
-        }
-
-        .separator::before {
-            content: 'OR';
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background-color: #f0f0f5;
-            color: #354f8e;
-            padding: 5px 12px;
-            font-size: 1rem;
-            font-weight: bold;
-            border-radius: 50%;
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-        }
-
-        .clg_name {
-            color: #ffffff;
-            cursor: default;
-            font-size: 24px;
-            margin: 15px 10px 15px 15px;
-            text-align: center;
-            text-decoration: none;
-            font-weight: 500;
-        }
-
-        .navbar {
-            width: 100vw;
-            background-color: #354f8e;
-        }
-
-        .navbar-brand {
-            display: flex;
-            align-items: center;
-        }
-
-        .navbar-brand .logo {
-            height: 62px;
-        }
-
-        .login-container {
-            display: flex;
-            justify-content: flex-end;
-            margin-left: auto;
-            /* Push the login form to the right */
-        }
-
-        /* Additional Styling for Aesthetics */
-        .form-container:hover {
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
-        }
-
-        /* Smooth transitions for button clicks */
-        .btn-submit:active {
-            transform: translateY(2px);
-        }
-
-        /* Responsive Design */
-        @media (max-width: 768px) {
-            .main-container {
-                flex-direction: column;
-                gap: 30px;
-                margin-top: 50px;
-            }
-
-            .separator {
-                display: none;
-            }
-
-            .form-container {
-                width: 90%;
-            }
-        }
-    </style>
-    <script>
-        // JavaScript to toggle OTP form visibility
-        window.onload = function() {
-            var otpForm = document.getElementById('otpForm');
-            var otpSent = <?php echo isset($_SESSION['otp']) ? 'true' : 'false'; ?>;
-            if (otpForm) {
-                if (otpSent) {
-                    otpForm.style.display = 'block';
-                } else {
-                    otpForm.style.display = 'none';
-                }
-            }
-        };
-    </script>
-</head>
-
-<body>
-    <nav class="navbar navbar-expand-lg navbar-light fixed-top">
-        <div class="container-fluid">
-            <div class="navbar-brand">
-                <a href="Admin.html">
-                    <img src="Images/logo.webp" alt="Logo" class="logo" />
-                </a>
-                <span class="clg_name">New Horizon Institute of Technology and
-                    Management</span>
-            </div>
+<div class="auth-page">
+    <?php foreach ($flashes as $item): ?>
+        <div class="flash flash-<?= e($item['type']) ?>">
+            <span><?= e($item['message']) ?></span>
         </div>
-    </nav>
+    <?php endforeach; ?>
 
-    <div class="main-container">
-        <div class="form-container">
-            <form class="otp-form" method="POST" action="index.php">
-                <h2>Welcome to Student Result Portal</h2>
-                <div class="form-group">
-                    <label for="ien_number">IEN Number:</label>
-                    <input type="text" id="ien_number" name="ien_number" required />
-                </div>
-                <div class="form-group">
-                    <label for="email">Email:</label>
-                    <input type="email" id="email" name="email" required />
-                </div>
-                <button type="submit" class="btn btn-primary btn-submit">Send OTP</button>
-            </form>
+    <main class="auth-layout">
+        <div class="auth-shell card">
+            <section class="auth-visual">
+                <div>
+                    <span class="eyebrow auth-eyebrow">
+                        NEW HORIZON EDUCATION SOCIETY
+                    </span>
 
-            <?php if (isset($_SESSION['otp'])): ?>
-                <br>
-                <form id="otpForm" method="POST" action="">
-                    <div class="form-group">
-                        <label for="otp_verification">Enter OTP:</label>
-                        <input type="text" id="otp_verification" name="otp_verification" required />
-                    </div>
-                    <button type="submit" class="btn btn-success">Verify OTP</button>
-                </form>
-            <?php endif; ?>
-        </div>
+                    <h2>
+                        Access your academic result securely.
+                    </h2>
 
-        <div class="separator"></div>
+                    <p>
+                        Verify your IEN and registered email, receive a
+                        one-time password, and continue to your published
+                        results and certificate-grade card.
+                    </p>
 
-        <div class="login-container">
-            <div class="form-container">
-                <form class="login-form" method="POST" action="Login_b.php">
-                    <?php if (isset($_GET['error'])) { ?>
-                        <div class="alert alert-primary" role="alert">
-                            <?php echo $_GET['error']; ?>
+                    <div class="auth-points">
+                        <div class="auth-point">
+                            <span class="auth-dot"></span>
+                            <span>
+                                OTP verification with expiry and attempt limits.
+                            </span>
                         </div>
-                    <?php } ?>
-                    <h2>Login</h2>
-                    <div class="form-group">
-                        <label for="login_email">Email:</label>
-                        <input type="email" id="login_email" name="login_email"
-                            value="<?php echo (isset($_GET['login_email'])) ? $_GET['login_email'] : "" ?>" required />
+
+                        <div class="auth-point">
+                            <span class="auth-dot"></span>
+                            <span>
+                                Results are available only after official publication.
+                            </span>
+                        </div>
+
+                        <div class="auth-point">
+                            <span class="auth-dot"></span>
+                            <span>
+                                Certificate-grade card can be printed or saved as PDF.
+                            </span>
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label for="password">Password:</label>
-                        <input type="password" id="password" name="password" required />
+                </div>
+
+                <div class="auth-address">
+                    <?= e(cfg('app.address')) ?>
+                </div>
+            </section>
+
+            <section class="auth-form">
+                <span class="eyebrow">
+                    STUDENT PORTAL
+                </span>
+
+                <h1 class="page-title auth-title">
+                    <?= $pending ? 'Enter your OTP' : 'Verify your identity' ?>
+                </h1>
+
+                <p class="page-subtitle auth-subtitle">
+                    <?=
+                    $pending
+                        ? 'A verification code has been sent to '
+                            . e(
+                                mask_email(
+                                    (string) (
+                                        $_SESSION['otp_pending_email'] ?? ''
+                                    )
+                                )
+                            )
+                            . '.'
+                        : 'Use the IEN number and registered email stored by the institute.'
+                    ?>
+                </p>
+
+                <?php if (!$pending): ?>
+
+                    <form
+                        method="post"
+                        action="<?= e(dr_url('actions/send-otp.php')) ?>"
+                        class="auth-form-spaced"
+                    >
+                        <input
+                            type="hidden"
+                            name="_csrf"
+                            value="<?= e(csrf_token()) ?>"
+                        >
+
+                        <div class="field">
+                            <label
+                                class="form-label required"
+                                for="ien"
+                            >
+                                IEN Number
+                            </label>
+
+                            <input
+                                class="input"
+                                id="ien"
+                                name="ien"
+                                inputmode="numeric"
+                                maxlength="20"
+                                autocomplete="username"
+                                required
+                            >
+                        </div>
+
+                        <div class="field">
+                            <label
+                                class="form-label required"
+                                for="email"
+                            >
+                                Registered Email
+                            </label>
+
+                            <input
+                                class="input"
+                                id="email"
+                                name="email"
+                                type="email"
+                                maxlength="255"
+                                autocomplete="email"
+                                required
+                            >
+                        </div>
+
+                        <button
+                            class="btn btn-primary btn-block"
+                            type="submit"
+                        >
+                            Send OTP
+                        </button>
+                    </form>
+
+                <?php else: ?>
+
+                    <form
+                        method="post"
+                        action="<?= e(dr_url('actions/verify-otp.php')) ?>"
+                        class="auth-form-spaced"
+                    >
+                        <input
+                            type="hidden"
+                            name="_csrf"
+                            value="<?= e(csrf_token()) ?>"
+                        >
+
+                        <div class="field">
+                            <label
+                                class="form-label required"
+                                for="otp"
+                            >
+                                6-digit OTP
+                            </label>
+
+                            <input
+                                class="input otp-code"
+                                id="otp"
+                                name="otp"
+                                inputmode="numeric"
+                                pattern="[0-9]{6}"
+                                maxlength="6"
+                                autocomplete="one-time-code"
+                                required
+                                autofocus
+                            >
+                        </div>
+
+                        <?php
+                        if (
+                            cfg('app.dev_otp_mode', false)
+                            && !empty($_SESSION['dev_otp_hint'])
+                        ):
+                        ?>
+                            <div class="auth-note">
+                                Local development OTP:
+                                <strong>
+                                    <?= e($_SESSION['dev_otp_hint']) ?>
+                                </strong>.
+                                This must be disabled on production.
+                            </div>
+                        <?php endif; ?>
+
+                        <button
+                            class="btn btn-primary btn-block"
+                            type="submit"
+                        >
+                            Verify OTP
+                        </button>
+                    </form>
+
+                    <div class="otp-box">
+                        <form
+                            method="post"
+                            action="<?= e(dr_url('actions/send-otp.php')) ?>"
+                            class="inline-form"
+                        >
+                            <input
+                                type="hidden"
+                                name="_csrf"
+                                value="<?= e(csrf_token()) ?>"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="ien"
+                                value="<?= e($_SESSION['otp_pending_ien'] ?? '') ?>"
+                            >
+
+                            <input
+                                type="hidden"
+                                name="email"
+                                value="<?= e($_SESSION['otp_pending_email'] ?? '') ?>"
+                            >
+
+                            <button
+                                id="resendOtpButton"
+                                class="btn btn-secondary btn-sm"
+                                type="submit"
+                                <?= $otpResendRemaining > 0 ? 'disabled' : '' ?>
+                            >
+                                <?= $otpResendRemaining > 0
+                                    ? 'Resend OTP (' . $otpResendRemaining . ')'
+                                    : 'Resend OTP'
+                                ?>
+                            </button>
+                        </form>
+
+                        <a
+                            class="admin-link"
+                            href="<?= e(dr_url('index.php?reset=1')) ?>"
+                        >
+                            Start over
+                        </a>
                     </div>
-                    <button type="submit" class="btn-submit">Login</button>
-                </form>
-            </div>
+
+                    <div
+                        class="otp-resend-note"
+                        id="resendOtpNote"
+                        data-resend-at="<?= e((string) $otpResendAt) ?>"
+                    >
+                        <?= $otpResendRemaining > 0
+                            ? 'Please wait before requesting another code.'
+                            : 'You can request another code if needed.'
+                        ?>
+                    </div>
+
+                <?php endif; ?>
+
+                <p class="help auth-help">
+                    For help, contact the institute administration.
+                    Never share your OTP.
+                </p>
+            </section>
         </div>
-    </div>
+    </main>
+</div>
 
-</body>
-
-</html>
+<?php page_end(); ?>
